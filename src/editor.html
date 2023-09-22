@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Chart Editor</title>
+
+    <style>
+      body {
+          margin: 0;
+          background: whitesmoke;
+      }
+
+      .container {
+          background: whitesmoke;
+          height: 100vh;
+          max-width: 600px;
+          margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <p>This chart's URL</p>
+        <p id="url"></p>
+      </div>
+
+      <input id="radioChartLine" type="radio" name="chart" value="line">
+      <label for="radioChartLine">Line</label>
+      <input id="radioChartBar" type="radio" name="chart" value="bar">
+      <label for="radioChartBar">Bar</label>
+      <input id="radioChartPie" type="radio" name="chart" value="pie">
+      <label for="radioChartPie">Pie</label>
+      <input id="radioChartScatter" type="radio" name="chart" value="scatter">
+      <label for="radioChartScatter">Scatter</label>
+      <input id="radioChartHistogram" type="radio" name="chart" value="histogram">
+      <label for="radioChartHistogram">Histogram</label>
+
+      <input id="input" type="text">
+
+      <div>
+        <img id="chart" src="#" />
+      </div>
+    </div>
+
+    <script>
+window.onload = () => {
+  const input = document.querySelector("#input")
+  const chart = document.querySelector("#chart")
+  const url = document.querySelector("#url")
+
+  input.onchange = e => {
+    chart.setAttribute("src", `${location.origin}/image?src=${encodeURIComponent(e.currentTarget.value)}`)
+
+    url.innerText = `${location.origin}/ogp?src=${encodeURIComponent(e.currentTarget.value)}`
+  }
+}
+    </script>
+  </body>
+</html>

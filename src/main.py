@@ -2,11 +2,17 @@ import json
 import io
 from urllib.parse import urlparse
 from fastapi import FastAPI, Request
-from fastapi.responses import Response, HTMLResponse
+from fastapi.responses import Response, FileResponse, HTMLResponse
 from jinja2 import Environment, BaseLoader
 import matplotlib.pyplot as plt
 
 app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return FileResponse("editor.html")
+
 
 template = Environment(loader=BaseLoader(), autoescape=True).from_string("""
 <!DOCTYPE html>
@@ -22,8 +28,8 @@ template = Environment(loader=BaseLoader(), autoescape=True).from_string("""
 """)
 
 
-@app.get("/gen", response_class=HTMLResponse)
-def generate_chart(request: Request, src: str, title: str = "", description: str = ""):
+@app.get("/ogp", response_class=HTMLResponse)
+async def generate_ogp(request: Request, src: str, title: str = "", description: str = ""):
     image_url = urlparse(str(request.url))._replace(path="/image")
 
     content = template.render({
