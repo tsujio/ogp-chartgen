@@ -6,6 +6,7 @@ from fastapi.responses import Response, FileResponse, HTMLResponse
 from jinja2 import Environment, BaseLoader
 from jsonschema import validate
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import japanize_matplotlib
 
 app = FastAPI()
@@ -44,70 +45,182 @@ async def generate_ogp(request: Request, src: str, title: str = "", description:
     return HTMLResponse(content=content, status_code=200)
 
 
-def _decode_src(src: str) -> dict:
-    s = json.loads(src)
-
-    schema = {
-        "type": "object",
-        "properties": {
-            "line": {
-                "type": "object",
-                "properties": {
-                    "x": {
-                        "type": "array",
-                        "items": {
-                            "type": "number",
-                        }
-                    },
-                    "y": {
-                        "type": "array",
-                        "items": {
-                            "anyOf": [
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "number",
-                                            },
-                                        },
-                                        "label": {
-                                            "type": "string"
-                                        },
-                                    },
-                                    "required": ["data", "label"],
-                                },
-                            ]
-                        }
-                    },
-                    "xLabel": {
-                        "type": "string",
-                    },
-                    "yLabel": {
-                        "type": "string",
-                    },
-                    "title": {
-                        "type": "string",
-                    },
-                },
-                "required": ["y"],
+line_chart_schema = {
+    "type": "object",
+    "properties": {
+        "x": {
+            "type": "array",
+            "items": {
+                "type": "number",
             },
         },
-        "anyOf": [
-            {
-                "required": [key]
-            }
-            for key in ["line", "bar", "pie", "scatter", "histogram"]
-        ]
-    }
+        "y": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                },
+                            },
+                            "label": {"type": "string"},
+                        },
+                        "required": ["data", "label"],
+                    },
+                },
+            ],
+        },
+        "xLabel": {
+            "type": "string",
+        },
+        "yLabel": {
+            "type": "string",
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["y"],
+}
+
+time_series_chart_schema = {
+    "type": "object",
+    "properties": {
+        "x": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "date"
+            },
+        },
+        "y": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                },
+                            },
+                            "label": {"type": "string"},
+                        },
+                        "required": ["data", "label"],
+                    },
+                },
+            ],
+        },
+        "xLabel": {
+            "type": "string",
+        },
+        "yLabel": {
+            "type": "string",
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["x", "y"],
+}
+
+schema = {
+    "type": "object",
+    "properties": {
+        "line": line_chart_schema,
+        "timeSeries": time_series_chart_schema,
+    },
+    "anyOf": [
+        {
+            "required": [key]
+        }
+        for key in ["line", "timeSeries", "bar", "pie", "scatter", "histogram"]
+    ],
+}
+
+
+def _decode_src(src: str) -> dict:
+    s = json.loads(src)
 
     validate(instance=s, schema=schema)
 
     return s
+
+
+def _plot_line_chart(src: dict):
+    data = ()
+    if "x" in src:
+        data = (src["x"],)
+
+    if any(isinstance(y, dict) for y in src["y"]):
+        for y in src["y"]:
+            _data = (*data, y["data"])
+            plt.plot(*_data, label=y["label"])
+
+        plt.legend()
+    else:
+        _data = (*data, src["y"])
+        plt.plot(*_data)
+
+    if "xLabel" in src:
+        plt.xlabel(src["xLabel"])
+    if "yLabel" in src:
+        plt.ylabel(src["yLabel"])
+
+    if "title" in src:
+        plt.title(src["title"])
+
+    ylim = plt.ylim()
+    ylim = min(ylim[0], 0), max(ylim[1], 0)
+    plt.ylim(bottom=ylim[0], top=ylim[1])
+
+
+def _plot_time_series_chart(src: dict):
+    x = [mdates.datestr2num(v) for v in src["x"]]
+
+    xaxis = plt.axes().xaxis
+    xaxis.set_minor_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+
+    plt.xticks(rotation=70)
+
+    if any(isinstance(y, dict) for y in src["y"]):
+        for y in src["y"]:
+            plt.plot(x, y["data"], label=y["label"])
+
+        plt.legend()
+    else:
+        plt.plot(x, src["y"])
+
+    if "xLabel" in src:
+        plt.xlabel(src["xLabel"])
+    if "yLabel" in src:
+        plt.ylabel(src["yLabel"])
+
+    if "title" in src:
+        plt.title(src["title"])
+
+    ylim = plt.ylim()
+    ylim = min(ylim[0], 0), max(ylim[1], 0)
+    plt.ylim(bottom=ylim[0], top=ylim[1])
 
 
 @app.get("/image", response_class=Response)
@@ -116,32 +229,12 @@ def generate_image(src: str):
     plt.figure()
 
     if "line" in s:
-        line = s["line"]
-
-        if any(isinstance(y, dict) for y in line["y"]):
-            for y in line["y"]:
-                data = (line["x"], y["data"]) if "x" in line else (y["data"],)
-                plt.plot(*data, label=y["label"])
-
-            plt.legend()
-        else:
-            data = (line["x"], line["y"]) if "x" in line else (line["y"],)
-            plt.plot(*data)
-
-        if "xLabel" in line:
-            plt.xlabel(line["xLabel"])
-        if "yLabel" in line:
-            plt.ylabel(line["yLabel"])
-
-        if "title" in line:
-            plt.title(line["title"])
-
-        ylim = plt.ylim()
-        ylim = min(ylim[0], 0), max(ylim[1], 0)
-        plt.ylim(bottom=ylim[0], top=ylim[1])
+        _plot_line_chart(s["line"])
+    elif "timeSeries" in s:
+        _plot_time_series_chart(s["timeSeries"])
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png")
+    plt.savefig(buf, format="png", bbox_inches="tight")
 
     buf.seek(0)
 

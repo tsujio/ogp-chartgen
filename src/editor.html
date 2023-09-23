@@ -22,59 +22,161 @@
     <div class="container">
       <div>
         <p>This chart's URL</p>
-        <p id="url"></p>
+        <p id="textUrl"></p>
       </div>
 
-      <input id="radioChartLine" type="radio" name="chart" value="line">
+      <input id="radioChartLine" type="radio" name="radioChart" value="line">
       <label for="radioChartLine">Line</label>
-      <input id="radioChartBar" type="radio" name="chart" value="bar">
+      <input id="radioChartTimeSeries" type="radio" name="radioChart" value="timeSeries">
+      <label for="radioChartTimeSeries">Time Series</label>
+      <input id="radioChartBar" type="radio" name="radioChart" value="bar">
       <label for="radioChartBar">Bar</label>
-      <input id="radioChartPie" type="radio" name="chart" value="pie">
+      <input id="radioChartPie" type="radio" name="radioChart" value="pie">
       <label for="radioChartPie">Pie</label>
-      <input id="radioChartScatter" type="radio" name="chart" value="scatter">
+      <input id="radioChartScatter" type="radio" name="radioChart" value="scatter">
       <label for="radioChartScatter">Scatter</label>
-      <input id="radioChartHistogram" type="radio" name="chart" value="histogram">
+      <input id="radioChartHistogram" type="radio" name="radioChart" value="histogram">
       <label for="radioChartHistogram">Histogram</label>
 
-      <br><label for="textChartTitle">Chart Title</label><input id="textChartTitle" type="text">
-      <br><label for="textXLabel">X Label</label><input id="textXLabel" type="text">
-      <br><label for="textYLabel">Y Label</label><input id="textYLabel" type="text">
+      <div class="chart-parameter-container line">
+        <br><label for="textboxLineChartTitle">Chart Title</label><input id="textboxLineChartTitle" type="text">
+        <br><label for="textboxLineChartXLabel">X Label</label><input id="textboxLineChartXLabel" type="text">
+        <br><label for="textboxLineChartYLabel">Y Label</label><input id="textboxLineChartYLabel" type="text">
+        <br><textarea id="textareaLineChartData"></textarea>
+      </div>
 
-      <br><input id="input" type="text">
+      <div class="chart-parameter-container timeSeries">
+        <br><label for="textboxTimeSeriesChartTitle">Chart Title</label><input id="textboxTimeSeriesChartTitle" type="text">
+        <br><label for="textboxTimeSeriesChartXLabel">X Label</label><input id="textboxTimeSeriesChartXLabel" type="text">
+        <br><label for="textboxTimeSeriesChartYLabel">Y Label</label><input id="textboxTimeSeriesChartYLabel" type="text">
+        <br><textarea id="textareaTimeSeriesChartData"></textarea>
+      </div>
+
+      <div class="chart-parameter-container bar">
+      </div>
+
+      <div class="chart-parameter-container pie">
+      </div>
+
+      <div class="chart-parameter-container scatter">
+      </div>
+
+      <div class="chart-parameter-container histogram">
+      </div>
 
       <div>
-        <img id="chart" src="#" />
+        <img id="imgChart" src="#" />
       </div>
     </div>
 
     <script>
 window.onload = () => {
-  const textChartTitle = document.querySelector("#textChartTitle")
-  const textXLabel = document.querySelector("#textXLabel")
-  const textYLabel = document.querySelector("#textYLabel")
-  const input = document.querySelector("#input")
-  const chart = document.querySelector("#chart")
-  const url = document.querySelector("#url")
+  const radioCharts = document.querySelectorAll("input[name='radioChart']")
 
-  const updateImage = () => {
-    const src = JSON.stringify({
-      line: {
-        title: textChartTitle.value,
-        xLabel: textXLabel.value,
-        yLabel: textYLabel.value,
-        x: JSON.parse(input.value).x,
-        y: JSON.parse(input.value).y,
-      }
-    })
-
-    chart.setAttribute("src", `${location.origin}/image?src=${encodeURIComponent(src)}`)
-    url.innerText = `${location.origin}/ogp?src=${encodeURIComponent(src)}`
+  const chartParams = {
+    line: {
+      title: document.querySelector("#textboxLineChartTitle"),
+      xLabel: document.querySelector("#textboxLineChartXLabel"),
+      yLabel: document.querySelector("#textboxLineChartYLabel"),
+      data: document.querySelector("#textareaLineChartData"),
+    },
+    timeSeries: {
+      title: document.querySelector("#textboxTimeSeriesChartTitle"),
+      xLabel: document.querySelector("#textboxTimeSeriesChartXLabel"),
+      yLabel: document.querySelector("#textboxTimeSeriesChartYLabel"),
+      data: document.querySelector("#textareaTimeSeriesChartData"),
+    },
   }
 
-  textChartTitle.onchange = updateImage
-  textXLabel.onchange = updateImage
-  textYLabel.onchange = updateImage
-  input.onchange = updateImage
+  const imgChart = document.querySelector("#imgChart")
+  const textUrl = document.querySelector("#textUrl")
+
+  for (const radio of radioCharts) {
+    radio.onchange = () => {
+      for (const container of document.querySelectorAll(".chart-parameter-container")) {
+        container.style.display = "none"
+      }
+      document.querySelector(`.chart-parameter-container.${radio.value}`).style.display = radio.checked ? "block" : "none"
+
+      updateImage()
+    }
+  }
+
+  const updateImage = () => {
+    let src
+    for (const radio of radioCharts) {
+      if (radio.checked) {
+        switch (radio.value) {
+        case "line":
+          {
+            const rows = chartParams.line.data.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
+            const data = {}
+            for (let j = 0; j < rows[0].length; j++) {
+              data[rows[0][j]] = rows.slice(1).map(row => parseFloat(row[j]))
+            }
+            const x = data.x
+            const y = Object.entries(data)
+              .filter(([label, data]) => label !== "x")
+              .map(([label, data]) => ({label, data}))
+
+            src = {
+              line: {
+                title: chartParams.line.title.value,
+                xLabel: chartParams.line.xLabel.value,
+                yLabel: chartParams.line.yLabel.value,
+                x: x,
+                y: y,
+              }
+            }
+          }
+          break
+
+        case "timeSeries":
+          {
+            const rows = chartParams.timeSeries.data.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
+            const data = {}
+            for (let j = 0; j < rows[0].length; j++) {
+              data[rows[0][j]] = rows.slice(1).map(row => rows[0][j] === "x" ? row[j] : parseFloat(row[j]))
+            }
+            const x = data.x
+            const y = Object.entries(data)
+              .filter(([label, data]) => label !== "x")
+              .map(([label, data]) => ({label, data}))
+
+            src = {
+              timeSeries: {
+                title: chartParams.timeSeries.title.value,
+                xLabel: chartParams.timeSeries.xLabel.value,
+                yLabel: chartParams.timeSeries.yLabel.value,
+                x: x,
+                y: y,
+              }
+            }
+          }
+          break
+        }
+
+        break
+      }
+    }
+
+    if (src) {
+      const srcValue = encodeURIComponent(JSON.stringify(src))
+      imgChart.setAttribute("src", `${location.origin}/image?src=${srcValue}`)
+      textUrl.innerText = `${location.origin}/ogp?src=${srcValue}`
+    } else {
+      imgChart.setAttribute("src", "#")
+      textUrl.innerText = ""
+    }
+  }
+
+  for (const chart in chartParams) {
+    for (const k in chartParams[chart]) {
+      chartParams[chart][k].onchange = updateImage
+    }
+  }
+
+  radioCharts[0].click()
 }
     </script>
   </body>
