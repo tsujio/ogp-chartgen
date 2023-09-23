@@ -36,7 +36,11 @@
       <input id="radioChartHistogram" type="radio" name="chart" value="histogram">
       <label for="radioChartHistogram">Histogram</label>
 
-      <input id="input" type="text">
+      <br><label for="textChartTitle">Chart Title</label><input id="textChartTitle" type="text">
+      <br><label for="textXLabel">X Label</label><input id="textXLabel" type="text">
+      <br><label for="textYLabel">Y Label</label><input id="textYLabel" type="text">
+
+      <br><input id="input" type="text">
 
       <div>
         <img id="chart" src="#" />
@@ -45,15 +49,32 @@
 
     <script>
 window.onload = () => {
+  const textChartTitle = document.querySelector("#textChartTitle")
+  const textXLabel = document.querySelector("#textXLabel")
+  const textYLabel = document.querySelector("#textYLabel")
   const input = document.querySelector("#input")
   const chart = document.querySelector("#chart")
   const url = document.querySelector("#url")
 
-  input.onchange = e => {
-    chart.setAttribute("src", `${location.origin}/image?src=${encodeURIComponent(e.currentTarget.value)}`)
+  const updateImage = () => {
+    const src = JSON.stringify({
+      line: {
+        title: textChartTitle.value,
+        xLabel: textXLabel.value,
+        yLabel: textYLabel.value,
+        x: JSON.parse(input.value).x,
+        y: JSON.parse(input.value).y,
+      }
+    })
 
-    url.innerText = `${location.origin}/ogp?src=${encodeURIComponent(e.currentTarget.value)}`
+    chart.setAttribute("src", `${location.origin}/image?src=${encodeURIComponent(src)}`)
+    url.innerText = `${location.origin}/ogp?src=${encodeURIComponent(src)}`
   }
+
+  textChartTitle.onchange = updateImage
+  textXLabel.onchange = updateImage
+  textYLabel.onchange = updateImage
+  input.onchange = updateImage
 }
     </script>
   </body>
