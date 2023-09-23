@@ -52,7 +52,6 @@
         <br><label for="textboxLineChartTitle">Chart Title</label><input id="textboxLineChartTitle" type="text">
         <br><label for="textboxLineChartXLabel">X Label</label><input id="textboxLineChartXLabel" type="text">
         <br><label for="textboxLineChartYLabel">Y Label</label><input id="textboxLineChartYLabel" type="text">
-        <br><textarea id="textareaLineChartData"></textarea>
       </div>
 
       <div class="chart-parameter-container timeSeries">
@@ -65,14 +64,12 @@
             <label for="radioTimeSeriesChartIntervalUnitDay"><input id="radioTimeSeriesChartIntervalUnitDay" type="radio" name="radioTimeSeriesChartIntervalUnit" value="day" checked> Day</label>
             <label for="radioTimeSeriesChartIntervalUnitHour"><input id="radioTimeSeriesChartIntervalUnitHour" type="radio" name="radioTimeSeriesChartIntervalUnit" value="hour"> Hour</label>
             <label for="radioTimeSeriesChartIntervalUnitMinute"><input id="radioTimeSeriesChartIntervalUnitMinute" type="radio" name="radioTimeSeriesChartIntervalUnit" value="minute"> Minute</label>
-        <br><textarea id="textareaTimeSeriesChartData"></textarea>
       </div>
 
       <div class="chart-parameter-container bar">
         <br><label for="textboxBarChartTitle">Chart Title</label><input id="textboxBarChartTitle" type="text">
         <br><label for="textboxBarChartXLabel">X Label</label><input id="textboxBarChartXLabel" type="text">
         <br><label for="textboxBarChartYLabel">Y Label</label><input id="textboxBarChartYLabel" type="text">
-        <br><textarea id="textareaBarChartData"></textarea>
       </div>
 
       <div class="chart-parameter-container pie">
@@ -82,6 +79,10 @@
       </div>
 
       <div class="chart-parameter-container histogram">
+      </div>
+
+      <div>
+        <textarea id="textareaChartData"></textarea>
       </div>
 
       <div>
@@ -98,22 +99,21 @@ window.onload = () => {
       title: document.querySelector("#textboxLineChartTitle"),
       xLabel: document.querySelector("#textboxLineChartXLabel"),
       yLabel: document.querySelector("#textboxLineChartYLabel"),
-      data: document.querySelector("#textareaLineChartData"),
     },
     timeSeries: {
       title: document.querySelector("#textboxTimeSeriesChartTitle"),
       xLabel: document.querySelector("#textboxTimeSeriesChartXLabel"),
       yLabel: document.querySelector("#textboxTimeSeriesChartYLabel"),
       intervalUnits: Array.from(document.querySelectorAll("input[name='radioTimeSeriesChartIntervalUnit']")),
-      data: document.querySelector("#textareaTimeSeriesChartData"),
     },
     bar: {
       title: document.querySelector("#textboxBarChartTitle"),
       xLabel: document.querySelector("#textboxBarChartXLabel"),
       yLabel: document.querySelector("#textboxBarChartYLabel"),
-      data: document.querySelector("#textareaBarChartData"),
     },
   }
+
+  const textareaChartData = document.querySelector("#textareaChartData")
 
   const imgChart = document.querySelector("#imgChart")
   const textUrl = document.querySelector("#textUrl")
@@ -130,29 +130,25 @@ window.onload = () => {
   }
 
   const updateImage = () => {
+    const rows = textareaChartData.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
+    const data = rows[0].map((col, j) => ({
+      label: col,
+      data: rows.slice(1).map(row => row[j]).map(v => Number.isNaN(Number(v)) ? v : parseFloat(v)),
+    }))
+
     let src
     for (const radio of radioCharts) {
       if (radio.checked) {
         switch (radio.value) {
         case "line":
           {
-            const rows = chartParams.line.data.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
-            const data = {}
-            for (let j = 0; j < rows[0].length; j++) {
-              data[rows[0][j]] = rows.slice(1).map(row => parseFloat(row[j]))
-            }
-            const x = data.x
-            const y = Object.entries(data)
-              .filter(([label, data]) => label !== "x")
-              .map(([label, data]) => ({label, data}))
-
             src = {
               line: {
                 title: chartParams.line.title.value,
                 xLabel: chartParams.line.xLabel.value,
                 yLabel: chartParams.line.yLabel.value,
-                x: x,
-                y: y,
+                x: data[0].data,
+                y: data.slice(1),
               }
             }
           }
@@ -160,15 +156,6 @@ window.onload = () => {
 
         case "timeSeries":
           {
-            const rows = chartParams.timeSeries.data.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
-            const data = {}
-            for (let j = 0; j < rows[0].length; j++) {
-              data[rows[0][j]] = rows.slice(1).map(row => rows[0][j] === "x" ? row[j] : parseFloat(row[j]))
-            }
-            const x = data.x
-            const y = Object.entries(data)
-              .filter(([label, data]) => label !== "x")
-              .map(([label, data]) => ({label, data}))
             const intervalUnit = chartParams.timeSeries.intervalUnits.filter(e => e.checked).map(e => e.value)[0]
 
             src = {
@@ -176,8 +163,8 @@ window.onload = () => {
                 title: chartParams.timeSeries.title.value,
                 xLabel: chartParams.timeSeries.xLabel.value,
                 yLabel: chartParams.timeSeries.yLabel.value,
-                x: x,
-                y: y,
+                x: data[0].data,
+                y: data.slice(1),
                 xInterval: {
                   unit: intervalUnit,
                 },
@@ -188,23 +175,13 @@ window.onload = () => {
 
         case "bar":
           {
-            const rows = chartParams.bar.data.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
-            const data = {}
-            for (let j = 0; j < rows[0].length; j++) {
-              data[rows[0][j]] = rows.slice(1).map(row => row[j])
-            }
-            const x = data.x.map(v => Number.isNaN(Number(v)) ? v : parseFloat(v))
-            const y = Object.entries(data)
-              .filter(([label, data]) => label !== "x")
-              .map(([label, data]) => ({label, data: data.map(v => parseFloat(v))}))
-
             src = {
               bar: {
                 title: chartParams.bar.title.value,
                 xLabel: chartParams.bar.xLabel.value,
                 yLabel: chartParams.bar.yLabel.value,
-                x: x,
-                y: y,
+                x: data[0].data,
+                y: data.slice(1),
               }
             }
           }
@@ -236,6 +213,8 @@ window.onload = () => {
       }
     }
   }
+
+  textareaChartData.onchange = updateImage
 
   radioCharts[0].click()
 }
