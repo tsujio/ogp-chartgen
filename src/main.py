@@ -345,14 +345,16 @@ def _plot_bar_chart(src: dict):
         for y in src["y"]:
             if len(x) != len(y["data"]):
                 raise HTTPException(status_code=400, detail="Some data have different length")
-            plt.bar(x, y["data"], bottom=bottom, label=y["label"])
+            c = plt.bar(x, y["data"], bottom=bottom, label=y["label"])
+            plt.bar_label(c, label_type="center")
             bottom = y["data"] if not bottom else [b + v for b, v in zip(bottom, y["data"])]
 
         plt.legend()
     else:
         if len(x) != len(src["y"]):
             raise HTTPException(status_code=400, detail="Some data have different length")
-        plt.bar(x, src["y"])
+        c = plt.bar(x, src["y"])
+        plt.bar_label(c)
 
     if "xLabel" in src:
         plt.xlabel(src["xLabel"])
