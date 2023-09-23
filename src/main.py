@@ -138,6 +138,19 @@ time_series_chart_schema = {
         "title": {
             "type": "string",
         },
+        "xInterval": {
+            "type": "object",
+            "properties": {
+                "unit": {
+                    "type": "string",
+                    "enum": ["year", "month", "week", "day", "hour", "minute"],
+                },
+                "interval": {
+                    "type": "number",
+                },
+            },
+            "required": ["unit"],
+        },
     },
     "required": ["x", "y"],
 }
@@ -196,9 +209,34 @@ def _plot_line_chart(src: dict):
 def _plot_time_series_chart(src: dict):
     x = [mdates.datestr2num(v) for v in src["x"]]
 
+    if "xInterval" in src:
+        interval = src["xInterval"].get("interval", 1)
+        match src["xInterval"]["unit"]:
+            case "year":
+                formatter = mdates.DateFormatter("%Y")
+                locator = mdates.YearLocator(base=interval)
+            case "month":
+                formatter = mdates.DateFormatter("%Y-%m")
+                locator = mdates.MonthLocator(interval=interval)
+            case "week":
+                formatter = mdates.DateFormatter("%Y-%m-%d")
+                locator = mdates.WeekdayLocator(interval=interval)
+            case "day":
+                formatter = mdates.DateFormatter("%Y-%m-%d")
+                locator = mdates.DayLocator(interval=interval)
+            case "hour":
+                formatter = mdates.DateFormatter("%Y-%m-%d %H:00")
+                locator = mdates.HourLocator(interval=interval)
+            case "minute":
+                formatter = mdates.DateFormatter("%Y-%m-%d %H:%M")
+                locator = mdates.MinuteLocator(interval=interval)
+    else:
+        formatter = mdates.DateFormatter("%Y-%m-%d")
+        locator = mdates.DayLocator(interval=1)
+
     xaxis = plt.axes().xaxis
-    xaxis.set_minor_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    xaxis.set_major_formatter(formatter)
+    xaxis.set_major_locator(locator)
 
     plt.xticks(rotation=70)
 

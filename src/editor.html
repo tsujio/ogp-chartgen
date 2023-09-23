@@ -49,6 +49,12 @@
         <br><label for="textboxTimeSeriesChartTitle">Chart Title</label><input id="textboxTimeSeriesChartTitle" type="text">
         <br><label for="textboxTimeSeriesChartXLabel">X Label</label><input id="textboxTimeSeriesChartXLabel" type="text">
         <br><label for="textboxTimeSeriesChartYLabel">Y Label</label><input id="textboxTimeSeriesChartYLabel" type="text">
+        <br><label for="radioTimeSeriesChartIntervalUnitYear"><input id="radioTimeSeriesChartIntervalUnitYear" type="radio" name="radioTimeSeriesChartIntervalUnit" value="year"> Year</label>
+            <label for="radioTimeSeriesChartIntervalUnitMonth"><input id="radioTimeSeriesChartIntervalUnitMonth" type="radio" name="radioTimeSeriesChartIntervalUnit" value="month"> Month</label>
+            <label for="radioTimeSeriesChartIntervalUnitWeek"><input id="radioTimeSeriesChartIntervalUnitWeek" type="radio" name="radioTimeSeriesChartIntervalUnit" value="week" checked> Week</label>
+            <label for="radioTimeSeriesChartIntervalUnitDay"><input id="radioTimeSeriesChartIntervalUnitDay" type="radio" name="radioTimeSeriesChartIntervalUnit" value="day" checked> Day</label>
+            <label for="radioTimeSeriesChartIntervalUnitHour"><input id="radioTimeSeriesChartIntervalUnitHour" type="radio" name="radioTimeSeriesChartIntervalUnit" value="hour"> Hour</label>
+            <label for="radioTimeSeriesChartIntervalUnitMinute"><input id="radioTimeSeriesChartIntervalUnitMinute" type="radio" name="radioTimeSeriesChartIntervalUnit" value="minute"> Minute</label>
         <br><textarea id="textareaTimeSeriesChartData"></textarea>
       </div>
 
@@ -84,6 +90,7 @@ window.onload = () => {
       title: document.querySelector("#textboxTimeSeriesChartTitle"),
       xLabel: document.querySelector("#textboxTimeSeriesChartXLabel"),
       yLabel: document.querySelector("#textboxTimeSeriesChartYLabel"),
+      intervalUnits: Array.from(document.querySelectorAll("input[name='radioTimeSeriesChartIntervalUnit']")),
       data: document.querySelector("#textareaTimeSeriesChartData"),
     },
   }
@@ -142,6 +149,7 @@ window.onload = () => {
             const y = Object.entries(data)
               .filter(([label, data]) => label !== "x")
               .map(([label, data]) => ({label, data}))
+            const intervalUnit = chartParams.timeSeries.intervalUnits.filter(e => e.checked).map(e => e.value)[0]
 
             src = {
               timeSeries: {
@@ -150,6 +158,9 @@ window.onload = () => {
                 yLabel: chartParams.timeSeries.yLabel.value,
                 x: x,
                 y: y,
+                xInterval: {
+                  unit: intervalUnit,
+                },
               }
             }
           }
@@ -172,7 +183,13 @@ window.onload = () => {
 
   for (const chart in chartParams) {
     for (const k in chartParams[chart]) {
-      chartParams[chart][k].onchange = updateImage
+      if (!Array.isArray(chartParams[chart][k])) {
+        chartParams[chart][k].onchange = updateImage
+      } else {
+        for (const e of chartParams[chart][k]) {
+          e.onchange = updateImage
+        }
+      }
     }
   }
 
