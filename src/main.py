@@ -209,6 +209,10 @@ bar_chart_schema = {
         "title": {
             "type": "string",
         },
+        "groupingStyle": {
+            "type": "string",
+            "enum": ["stacked", "grouped"],
+        },
     },
     "required": ["y"],
 }
@@ -340,14 +344,26 @@ def _plot_bar_chart(src: dict):
     else:
         x = list(range(len(src["y"])))
 
+    axes = plt.axes()
+
     if all(isinstance(y, dict) for y in src["y"]):
-        bottom = None
-        for y in src["y"]:
+        for i, y in enumerate(src["y"]):
             if len(x) != len(y["data"]):
                 raise HTTPException(status_code=400, detail="Some data have different length")
-            c = plt.bar(x, y["data"], bottom=bottom, label=y["label"])
-            plt.bar_label(c, label_type="center")
-            bottom = y["data"] if not bottom else [b + v for b, v in zip(bottom, y["data"])]
+            match src.get("groupingStyle", "stacked"):
+                case "stacked":
+                    bottom = [sum(py["data"][j] for py in src["y"][:i]) for j in range(len(y["data"]))]
+                    c = plt.bar(x, y["data"], bottom=bottom, label=y["label"])
+                    plt.bar_label(c, label_type="center")
+                case "grouped":
+                    xn = list(range(len(x))) if all(isinstance(v, str) for v in x) else x
+                    width = ((xn[1] - xn[0]) / len(src["y"]) * 0.8) if len(xn) > 1 else 1.0
+                    x_offset = [n + width * i for n in xn]
+                    c = plt.bar(x_offset, y["data"], width, label=y["label"])
+                    plt.bar_label(c)
+
+                    if i == len(src["y"]) - 1:
+                        axes.set_xticks([n + width * (len(src["y"]) - 1) / 2 for n in xn], x)
 
         plt.legend()
     else:

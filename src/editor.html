@@ -70,6 +70,8 @@
         <br><label for="textboxBarChartTitle">Chart Title</label><input id="textboxBarChartTitle" type="text">
         <br><label for="textboxBarChartXLabel">X Label</label><input id="textboxBarChartXLabel" type="text">
         <br><label for="textboxBarChartYLabel">Y Label</label><input id="textboxBarChartYLabel" type="text">
+        <br><label for="radioBarChartGroupingStyleStacked"><input id="radioBarChartGroupingStyleStacked" type="radio" name="radioBarChartGroupingStyle" value="stacked" checked> Stacked</label>
+            <label for="radioBarChartGroupingStyleGrouped"><input id="radioBarChartGroupingStyleGrouped" type="radio" name="radioBarChartGroupingStyle" value="grouped"> Grouped</label>
       </div>
 
       <div class="chart-parameter-container pie">
@@ -110,6 +112,7 @@ window.onload = () => {
       title: document.querySelector("#textboxBarChartTitle"),
       xLabel: document.querySelector("#textboxBarChartXLabel"),
       yLabel: document.querySelector("#textboxBarChartYLabel"),
+      groupingStyles: Array.from(document.querySelectorAll("input[name='radioBarChartGroupingStyle']")),
     },
   }
 
@@ -130,11 +133,24 @@ window.onload = () => {
   }
 
   const updateImage = () => {
-    const rows = textareaChartData.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(","))
-    const data = rows[0].map((col, j) => ({
-      label: col,
-      data: rows.slice(1).map(row => row[j]).map(v => Number.isNaN(Number(v)) ? v : parseFloat(v)),
-    }))
+    const parseData = delimiter => {
+      const rows = textareaChartData.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(delimiter))
+      const data = rows[0].map((col, j) => ({
+        label: col,
+        data: rows.slice(1).map(row => row[j]).map(v => v === "" ? null : Number.isNaN(Number(v)) ? v : parseFloat(v)),
+      }))
+      return data
+    }
+
+    let data
+    for (const delimiter of ["\t", ","]) {
+      data = parseData(delimiter)
+      if (data.length > 1) {
+        break
+      }
+    }
+
+    const flattenIfSingleItem = ary => ary.length > 1 ? ary : ary.flat()
 
     let src
     for (const radio of radioCharts) {
@@ -148,7 +164,7 @@ window.onload = () => {
                 xLabel: chartParams.line.xLabel.value,
                 yLabel: chartParams.line.yLabel.value,
                 x: data[0].data,
-                y: data.slice(1),
+                y: flattenIfSingleItem(data.slice(1).map(d => data.length <= 2 ? d.data : d)),
               }
             }
           }
@@ -164,7 +180,7 @@ window.onload = () => {
                 xLabel: chartParams.timeSeries.xLabel.value,
                 yLabel: chartParams.timeSeries.yLabel.value,
                 x: data[0].data,
-                y: data.slice(1),
+                y: flattenIfSingleItem(data.slice(1).map(d => data.length <= 2 ? d.data : d)),
                 xInterval: {
                   unit: intervalUnit,
                 },
@@ -175,13 +191,16 @@ window.onload = () => {
 
         case "bar":
           {
+            const groupingStyle = chartParams.bar.groupingStyles.filter(e => e.checked).map(e => e.value)[0]
+
             src = {
               bar: {
                 title: chartParams.bar.title.value,
                 xLabel: chartParams.bar.xLabel.value,
                 yLabel: chartParams.bar.yLabel.value,
                 x: data[0].data,
-                y: data.slice(1),
+                y: flattenIfSingleItem(data.slice(1).map(d => data.length <= 2 ? d.data : d)),
+                groupingStyle: groupingStyle,
               }
             }
           }
