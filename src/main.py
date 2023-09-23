@@ -1,10 +1,10 @@
 import json
 import io
 from urllib.parse import urlparse
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import Response, FileResponse, HTMLResponse
 from jinja2 import Environment, BaseLoader
-from jsonschema import validate
+import jsonschema
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import japanize_matplotlib
@@ -155,11 +155,70 @@ time_series_chart_schema = {
     "required": ["x", "y"],
 }
 
+bar_chart_schema = {
+    "type": "object",
+    "properties": {
+        "x": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                    }
+                },
+            ],
+        },
+        "y": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                },
+                            },
+                            "label": {"type": "string"},
+                        },
+                        "required": ["data", "label"],
+                    },
+                },
+            ],
+        },
+        "xLabel": {
+            "type": "string",
+        },
+        "yLabel": {
+            "type": "string",
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["y"],
+}
+
 schema = {
     "type": "object",
     "properties": {
         "line": line_chart_schema,
         "timeSeries": time_series_chart_schema,
+        "bar": bar_chart_schema,
     },
     "anyOf": [
         {
@@ -171,9 +230,15 @@ schema = {
 
 
 def _decode_src(src: str) -> dict:
-    s = json.loads(src)
+    try:
+        s = json.loads(src)
+    except json.decoder.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail="Invalid json (src)")
 
-    validate(instance=s, schema=schema)
+    try:
+        jsonschema.validate(instance=s, schema=schema)
+    except jsonschema.exceptions.ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     return s
 
@@ -183,14 +248,18 @@ def _plot_line_chart(src: dict):
     if "x" in src:
         data = (src["x"],)
 
-    if any(isinstance(y, dict) for y in src["y"]):
+    if all(isinstance(y, dict) for y in src["y"]):
         for y in src["y"]:
             _data = (*data, y["data"])
+            if len(set(len(d) for d in _data)) != 1:
+                raise HTTPException(status_code=400, detail="Some data have different length")
             plt.plot(*_data, label=y["label"])
 
         plt.legend()
     else:
         _data = (*data, src["y"])
+        if len(set(len(d) for d in _data)) != 1:
+            raise HTTPException(status_code=400, detail="Some data have different length")
         plt.plot(*_data)
 
     if "xLabel" in src:
@@ -240,12 +309,16 @@ def _plot_time_series_chart(src: dict):
 
     plt.xticks(rotation=70)
 
-    if any(isinstance(y, dict) for y in src["y"]):
+    if all(isinstance(y, dict) for y in src["y"]):
         for y in src["y"]:
+            if len(x) != len(y["data"]):
+                raise HTTPException(status_code=400, detail="Some data have different length")
             plt.plot(x, y["data"], label=y["label"])
 
         plt.legend()
     else:
+        if len(x) != len(src["y"]):
+            raise HTTPException(status_code=400, detail="Some data have different length")
         plt.plot(x, src["y"])
 
     if "xLabel" in src:
@@ -261,6 +334,35 @@ def _plot_time_series_chart(src: dict):
     plt.ylim(bottom=ylim[0], top=ylim[1])
 
 
+def _plot_bar_chart(src: dict):
+    if "x" in src:
+        x = src["x"]
+    else:
+        x = list(range(len(src["y"])))
+
+    if all(isinstance(y, dict) for y in src["y"]):
+        bottom = None
+        for y in src["y"]:
+            if len(x) != len(y["data"]):
+                raise HTTPException(status_code=400, detail="Some data have different length")
+            plt.bar(x, y["data"], bottom=bottom, label=y["label"])
+            bottom = y["data"] if not bottom else [b + v for b, v in zip(bottom, y["data"])]
+
+        plt.legend()
+    else:
+        if len(x) != len(src["y"]):
+            raise HTTPException(status_code=400, detail="Some data have different length")
+        plt.bar(x, src["y"])
+
+    if "xLabel" in src:
+        plt.xlabel(src["xLabel"])
+    if "yLabel" in src:
+        plt.ylabel(src["yLabel"])
+
+    if "title" in src:
+        plt.title(src["title"])
+
+
 @app.get("/image", response_class=Response)
 def generate_image(src: str):
     s = _decode_src(src)
@@ -270,6 +372,8 @@ def generate_image(src: str):
         _plot_line_chart(s["line"])
     elif "timeSeries" in s:
         _plot_time_series_chart(s["timeSeries"])
+    elif "bar" in s:
+        _plot_bar_chart(s["bar"])
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png", bbox_inches="tight")
