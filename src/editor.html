@@ -17,85 +17,216 @@
           margin: auto;
       }
 
+      .section {
+          margin-top: 1rem;
+      }
+
+      .stack {
+          display: flex;
+      }
+
+      .stack.stack-horizontal > .stack-item:not(:first-child) {
+          margin-left: 1rem;
+      }
+
+      .stack.stack-vertical {
+          flex-direction: column;
+      }
+
+      .stack.stack-vertical > .stack-item:not(:first-child) {
+          margin-top: 0.5rem;
+      }
+
+      .url-container {
+          display: flex;
+          align-items: center;
+          border: 1px solid gray;
+          border-radius: 6px;
+          background: white;
+          padding: 1rem 2rem;
+      }
+
+      .url-heading {
+          margin: 0;
+      }
+
       #textUrl {
           white-space: nowrap;
           overflow-x: scroll;
+          margin: 0;
+          padding: 1rem 0;
+          font-weight: bold;
       }      
+
+      #buttonCopyUrl {
+          margin-left: 1.5rem;
+          height: 2.5rem;
+      }
 
       textarea {
           width: 100%;
           height: 20rem;
+          box-sizing: border-box;
+      }
+
+      #imgChart {
+          width: 100%;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div>
-        <p>This chart's URL</p>
-        <p id="textUrl"></p>
+      <div class="section">
+        <p class="url-heading">This chart's URL</p>
+        <div class="url-container">
+          <p id="textUrl"></p>
+          <button id="buttonCopyUrl">Copy</button>
+        </div>
       </div>
 
-      <input id="radioChartLine" type="radio" name="radioChart" value="line">
-      <label for="radioChartLine">Line</label>
-      <input id="radioChartTimeSeries" type="radio" name="radioChart" value="timeSeries">
-      <label for="radioChartTimeSeries">Time Series</label>
-      <input id="radioChartBar" type="radio" name="radioChart" value="bar">
-      <label for="radioChartBar">Bar</label>
-      <input id="radioChartPie" type="radio" name="radioChart" value="pie">
-      <label for="radioChartPie">Pie</label>
-      <input id="radioChartScatter" type="radio" name="radioChart" value="scatter">
-      <label for="radioChartScatter">Scatter</label>
-      <input id="radioChartHistogram" type="radio" name="radioChart" value="histogram">
-      <label for="radioChartHistogram">Histogram</label>
-
-      <div class="chart-parameter-container line">
-        <br><label for="textboxLineChartTitle">Chart Title</label><input id="textboxLineChartTitle" type="text">
-        <br><label for="textboxLineChartXLabel">X Label</label><input id="textboxLineChartXLabel" type="text">
-        <br><label for="textboxLineChartYLabel">Y Label</label><input id="textboxLineChartYLabel" type="text">
+      <div class="section">
+        <div class="stack stack-horizontal">
+          <div class="stack-item">
+            <label for="radioChartLine"><input id="radioChartLine" type="radio" name="radioChart" value="line"> Line</label>
+          </div>
+          <div class="stack-item">
+            <label for="radioChartTimeSeries"><input id="radioChartTimeSeries" type="radio" name="radioChart" value="timeSeries"> Time Series</label>
+          </div>
+          <div class="stack-item">
+            <label for="radioChartBar"><input id="radioChartBar" type="radio" name="radioChart" value="bar"> Bar</label>
+          </div>
+          <div class="stack-item">
+            <label for="radioChartPie"><input id="radioChartPie" type="radio" name="radioChart" value="pie"> Pie</label>
+          </div>
+          <div class="stack-item">
+            <label for="radioChartScatter"><input id="radioChartScatter" type="radio" name="radioChart" value="scatter"> Scatter</label>
+          </div>
+          <div class="stack-item">
+            <label for="radioChartHistogram"><input id="radioChartHistogram" type="radio" name="radioChart" value="histogram"> Histogram</label>
+          </div>
+        </div>
       </div>
 
-      <div class="chart-parameter-container timeSeries">
-        <br><label for="textboxTimeSeriesChartTitle">Chart Title</label><input id="textboxTimeSeriesChartTitle" type="text">
-        <br><label for="textboxTimeSeriesChartXLabel">X Label</label><input id="textboxTimeSeriesChartXLabel" type="text">
-        <br><label for="textboxTimeSeriesChartYLabel">Y Label</label><input id="textboxTimeSeriesChartYLabel" type="text">
-        <br><label for="radioTimeSeriesChartIntervalUnitYear"><input id="radioTimeSeriesChartIntervalUnitYear" type="radio" name="radioTimeSeriesChartIntervalUnit" value="year"> Year</label>
-            <label for="radioTimeSeriesChartIntervalUnitMonth"><input id="radioTimeSeriesChartIntervalUnitMonth" type="radio" name="radioTimeSeriesChartIntervalUnit" value="month"> Month</label>
-            <label for="radioTimeSeriesChartIntervalUnitWeek"><input id="radioTimeSeriesChartIntervalUnitWeek" type="radio" name="radioTimeSeriesChartIntervalUnit" value="week" checked> Week</label>
-            <label for="radioTimeSeriesChartIntervalUnitDay"><input id="radioTimeSeriesChartIntervalUnitDay" type="radio" name="radioTimeSeriesChartIntervalUnit" value="day" checked> Day</label>
-            <label for="radioTimeSeriesChartIntervalUnitHour"><input id="radioTimeSeriesChartIntervalUnitHour" type="radio" name="radioTimeSeriesChartIntervalUnit" value="hour"> Hour</label>
-            <label for="radioTimeSeriesChartIntervalUnitMinute"><input id="radioTimeSeriesChartIntervalUnitMinute" type="radio" name="radioTimeSeriesChartIntervalUnit" value="minute"> Minute</label>
+      <div class="section">
+        <div class="chart-parameter-container line">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxLineChartTitle">Chart Title <input id="textboxLineChartTitle" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxLineChartXLabel">X Label <input id="textboxLineChartXLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxLineChartYLabel">Y Label <input id="textboxLineChartYLabel" type="text"></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-parameter-container timeSeries">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxTimeSeriesChartTitle">Chart Title <input id="textboxTimeSeriesChartTitle" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxTimeSeriesChartXLabel">X Label <input id="textboxTimeSeriesChartXLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxLineChartYLabel">Y Label <input id="textboxTimeSeriesChartYLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <div class="stack stack-horizontal">
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitYear"><input id="radioTimeSeriesChartIntervalUnitYear" type="radio" name="radioTimeSeriesChartIntervalUnit" value="year"> Year</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitMonth"><input id="radioTimeSeriesChartIntervalUnitMonth" type="radio" name="radioTimeSeriesChartIntervalUnit" value="month"> Month</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitWeek"><input id="radioTimeSeriesChartIntervalUnitWeek" type="radio" name="radioTimeSeriesChartIntervalUnit" value="week" checked> Week</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitDay"><input id="radioTimeSeriesChartIntervalUnitDay" type="radio" name="radioTimeSeriesChartIntervalUnit" value="day" checked> Day</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitHour"><input id="radioTimeSeriesChartIntervalUnitHour" type="radio" name="radioTimeSeriesChartIntervalUnit" value="hour"> Hour</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioTimeSeriesChartIntervalUnitMinute"><input id="radioTimeSeriesChartIntervalUnitMinute" type="radio" name="radioTimeSeriesChartIntervalUnit" value="minute"> Minute</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-parameter-container bar">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxBarChartTitle">Chart Title <input id="textboxBarChartTitle" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxBarChartXLabel">X Label <input id="textboxBarChartXLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxBarChartYLabel">Y Label <input id="textboxBarChartYLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <div class="stack stack-horizontal">
+                <div class="stack-item">
+                  <label for="radioBarChartGroupingStyleStacked"><input id="radioBarChartGroupingStyleStacked" type="radio" name="radioBarChartGroupingStyle" value="stacked" checked> Stacked</label>
+                </div>
+                <div class="stack-item">
+                  <label for="radioBarChartGroupingStyleGrouped"><input id="radioBarChartGroupingStyleGrouped" type="radio" name="radioBarChartGroupingStyle" value="grouped"> Grouped</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-parameter-container pie">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxPieChartTitle">Chart Title <input id="textboxPieChartTitle" type="text"></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-parameter-container scatter">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxScatterChartTitle">Chart Title <input id="textboxScatterChartTitle" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxScatterChartXLabel">X Label <input id="textboxScatterChartXLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxScatterChartYLabel">Y Label <input id="textboxScatterChartYLabel" type="text"></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-parameter-container histogram">
+          <div class="stack stack-vertical">
+            <div class="stack-item">
+              <label for="textboxHistogramChartTitle">Chart Title <input id="textboxHistogramChartTitle" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxHistogramChartXLabel">X Label <input id="textboxHistogramChartXLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxHistogramChartYLabel">Y Label <input id="textboxHistogramChartYLabel" type="text"></label>
+            </div>
+            <div class="stack-item">
+              <label for="textboxHistogramChartBins">Bins <input id="textboxHistogramChartBins" type="number"></label>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="chart-parameter-container bar">
-        <br><label for="textboxBarChartTitle">Chart Title</label><input id="textboxBarChartTitle" type="text">
-        <br><label for="textboxBarChartXLabel">X Label</label><input id="textboxBarChartXLabel" type="text">
-        <br><label for="textboxBarChartYLabel">Y Label</label><input id="textboxBarChartYLabel" type="text">
-        <br><label for="radioBarChartGroupingStyleStacked"><input id="radioBarChartGroupingStyleStacked" type="radio" name="radioBarChartGroupingStyle" value="stacked" checked> Stacked</label>
-            <label for="radioBarChartGroupingStyleGrouped"><input id="radioBarChartGroupingStyleGrouped" type="radio" name="radioBarChartGroupingStyle" value="grouped"> Grouped</label>
+      <div class="section">
+        <textarea id="textareaChartData" placeholder="CSV or TSV data"></textarea>
       </div>
 
-      <div class="chart-parameter-container pie">
-        <br><label for="textboxPieChartTitle">Chart Title</label><input id="textboxPieChartTitle" type="text">
-      </div>
-
-      <div class="chart-parameter-container scatter">
-        <br><label for="textboxScatterChartTitle">Chart Title</label><input id="textboxScatterChartTitle" type="text">
-        <br><label for="textboxScatterChartXLabel">X Label</label><input id="textboxScatterChartXLabel" type="text">
-        <br><label for="textboxScatterChartYLabel">Y Label</label><input id="textboxScatterChartYLabel" type="text">
-      </div>
-
-      <div class="chart-parameter-container histogram">
-        <br><label for="textboxHistogramChartTitle">Chart Title</label><input id="textboxHistogramChartTitle" type="text">
-        <br><label for="textboxHistogramChartXLabel">X Label</label><input id="textboxHistogramChartXLabel" type="text">
-        <br><label for="textboxHistogramChartYLabel">Y Label</label><input id="textboxHistogramChartYLabel" type="text">
-        <br><label for="textboxHistogramChartBins">Bins</label><input id="textboxHistogramChartBins" type="number">
-      </div>
-
-      <div>
-        <textarea id="textareaChartData"></textarea>
-      </div>
-
-      <div>
+      <div class="section">
         <img id="imgChart" src="#" />
       </div>
     </div>
@@ -142,6 +273,10 @@ window.onload = () => {
 
   const imgChart = document.querySelector("#imgChart")
   const textUrl = document.querySelector("#textUrl")
+
+  document.querySelector("#buttonCopyUrl").onclick = async () => {
+    await navigator.clipboard.writeText(textUrl.innerText)
+  }
 
   for (const radio of radioCharts) {
     radio.onchange = () => {
