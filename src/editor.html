@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Chart Editor</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <style>
       body {
@@ -69,6 +70,11 @@
           box-sizing: border-box;
       }
 
+      .error {
+          background: lightpink;
+          padding: 1rem;
+      }
+
       #imgChart {
           width: 100%;
       }
@@ -78,7 +84,7 @@
     <div class="container">
       <div class="section">
         <p class="url-heading">This chart's URL</p>
-        <div class="url-container">
+        <div class="url-container" id="urlContainer">
           <p id="textUrl"></p>
           <button id="buttonCopyUrl">Copy</button>
         </div>
@@ -223,6 +229,8 @@
       </div>
 
       <div class="section">
+        <p class="error" id="textError"></p>
+
         <textarea id="textareaChartData" placeholder="CSV or TSV data"></textarea>
       </div>
 
@@ -272,9 +280,14 @@ window.onload = () => {
   const textareaChartData = document.querySelector("#textareaChartData")
 
   const imgChart = document.querySelector("#imgChart")
-  const textUrl = document.querySelector("#textUrl")
 
-  document.querySelector("#buttonCopyUrl").onclick = async () => {
+  const urlContainer = document.querySelector("#urlContainer")
+  const textUrl = document.querySelector("#textUrl")
+  const buttonCopyUrl = document.querySelector("#buttonCopyUrl")
+
+  const textError = document.querySelector("#textError")
+
+  buttonCopyUrl.onclick = async () => {
     await navigator.clipboard.writeText(textUrl.innerText)
   }
 
@@ -289,9 +302,15 @@ window.onload = () => {
     }
   }
 
-  const updateImage = () => {
+  const updateImage = async () => {
+    textError.innerText = ""
+    textError.style.display = "none"
+
     const parseData = delimiter => {
       const rows = textareaChartData.value.split("\n").filter(line => line.trim() !== "").map(line => line.split(delimiter))
+      if (rows.length === 0) {
+        return []
+      }
       const data = rows[0].map((col, j) => ({
         label: col,
         data: rows.slice(1).map(row => row[j]).map(v => v === "" ? null : Number.isNaN(Number(v)) ? v : parseFloat(v)),
@@ -305,6 +324,17 @@ window.onload = () => {
       if (data.length > 1) {
         break
       }
+    }
+
+    if (data.length === 0) {
+      if (imgChart.getAttribute("src") !== "#") {
+        URL.revokeObjectURL(imgChart.getAttribute("src"))
+      }
+      imgChart.setAttribute("src", "#")
+      textUrl.innerText = ""
+      buttonCopyUrl.style.display = "none"
+      urlContainer.style.background = "lightgray"
+      return
     }
 
     const flattenIfSingleItem = ary => ary.length > 1 ? ary : ary.flat()
@@ -410,14 +440,22 @@ window.onload = () => {
       }
     }
 
-    if (src) {
-      const srcValue = encodeURIComponent(JSON.stringify(src))
-      imgChart.setAttribute("src", `${location.origin}/image?src=${srcValue}`)
-      textUrl.innerText = `${location.origin}/ogp?src=${srcValue}`
-    } else {
-      imgChart.setAttribute("src", "#")
-      textUrl.innerText = ""
+    const srcValue = encodeURIComponent(JSON.stringify(src))
+    const response = await fetch(`${location.origin}/image?src=${srcValue}`)
+    if (!response.ok) {
+      textError.innerText = await response.text()
+      textError.style.display = "block"
+      return
     }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    if (imgChart.getAttribute("src") !== "#") {
+      URL.revokeObjectURL(imgChart.getAttribute("src"))
+    }
+    imgChart.setAttribute("src", url)
+    textUrl.innerText = `${location.origin}/ogp?src=${srcValue}`
+    buttonCopyUrl.style.display = "inline-block"
+    urlContainer.style.background = "white"
   }
 
   for (const chart in chartParams) {

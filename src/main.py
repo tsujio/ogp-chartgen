@@ -379,7 +379,7 @@ def _plot_line_chart(src: dict):
         plt.title(src["title"])
 
     ylim = plt.ylim()
-    ylim = min(ylim[0], 0), max(ylim[1], 0)
+    ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
     plt.ylim(bottom=ylim[0], top=ylim[1])
 
 
@@ -438,7 +438,7 @@ def _plot_time_series_chart(src: dict):
         plt.title(src["title"])
 
     ylim = plt.ylim()
-    ylim = min(ylim[0], 0), max(ylim[1], 0)
+    ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
     plt.ylim(bottom=ylim[0], top=ylim[1])
 
 
