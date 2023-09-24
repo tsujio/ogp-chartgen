@@ -79,6 +79,9 @@
       </div>
 
       <div class="chart-parameter-container scatter">
+        <br><label for="textboxScatterChartTitle">Chart Title</label><input id="textboxScatterChartTitle" type="text">
+        <br><label for="textboxScatterChartXLabel">X Label</label><input id="textboxScatterChartXLabel" type="text">
+        <br><label for="textboxScatterChartYLabel">Y Label</label><input id="textboxScatterChartYLabel" type="text">
       </div>
 
       <div class="chart-parameter-container histogram">
@@ -117,6 +120,11 @@ window.onload = () => {
     },
     pie: {
       title: document.querySelector("#textboxPieChartTitle"),
+    },
+    scatter: {
+      title: document.querySelector("#textboxScatterChartTitle"),
+      xLabel: document.querySelector("#textboxScatterChartXLabel"),
+      yLabel: document.querySelector("#textboxScatterChartYLabel"),
     },
   }
 
@@ -216,6 +224,21 @@ window.onload = () => {
               pie: {
                 title: chartParams.pie.title.value,
                 data: data[0].data.map((v, i) => ({label: data[1].data[i], value: v})),
+              }
+            }
+          }
+          break
+
+        case "scatter":
+          {
+            src = {
+              scatter: {
+                title: chartParams.scatter.title.value,
+                xLabel: chartParams.scatter.xLabel.value,
+                yLabel: chartParams.scatter.yLabel.value,
+                data: (data.length > 2 ?
+                       data[0].data.map((x, i) => ({position: [x, data[1].data[i]], label: data[2].data[i]})) :
+                       data[0].data.map((x, i) => [x, data[1].data[i]])),
               }
             }
           }

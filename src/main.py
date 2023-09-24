@@ -242,6 +242,57 @@ pie_chart_schema = {
     "required": ["data"],
 }
 
+scatter_chart_schema = {
+    "type": "object",
+    "properties": {
+        "data": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number",
+                        },
+                        "minItems": 2,
+                        "maxItems": 2,
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "position": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                },
+                                "minItems": 2,
+                                "maxItems": 2,
+                            },
+                            "label": {
+                                "type": "string",
+                            },
+                        },
+                        "required": ["position", "label"],
+                    }
+                },
+            ]
+        },
+        "xLabel": {
+            "type": "string",
+        },
+        "yLabel": {
+            "type": "string",
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["data"],
+}
+
 schema = {
     "type": "object",
     "properties": {
@@ -249,6 +300,7 @@ schema = {
         "timeSeries": time_series_chart_schema,
         "bar": bar_chart_schema,
         "pie": pie_chart_schema,
+        "scatter": scatter_chart_schema,
     },
     "anyOf": [
         {
@@ -417,6 +469,30 @@ def _plot_pie_chart(src: dict):
         plt.title(src["title"])
 
 
+def _plot_scatter_chart(src: dict):
+    if all(isinstance(data, dict) for data in src["data"]):
+        labels = set(data["label"] for data in src["data"])
+        for label in labels:
+            positions = [data["position"] for data in src["data"] if data["label"] == label]
+            x = [x for x, y in positions]
+            y = [y for x, y in positions]
+            plt.scatter(x, y, label=label)
+
+        plt.legend()
+    else:
+        x = [x for x, y in src["data"]]
+        y = [y for x, y in src["data"]]
+        plt.scatter(x, y)
+
+    if "xLabel" in src:
+        plt.xlabel(src["xLabel"])
+    if "yLabel" in src:
+        plt.ylabel(src["yLabel"])
+
+    if "title" in src:
+        plt.title(src["title"])
+
+
 @app.get("/image", response_class=Response)
 def generate_image(src: str):
     s = _decode_src(src)
@@ -430,6 +506,8 @@ def generate_image(src: str):
         _plot_bar_chart(s["bar"])
     elif "pie" in s:
         _plot_pie_chart(s["pie"])
+    elif "scatter" in s:
+        _plot_scatter_chart(s["scatter"])
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png", bbox_inches="tight")
