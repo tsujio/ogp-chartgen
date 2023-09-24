@@ -85,6 +85,10 @@
       </div>
 
       <div class="chart-parameter-container histogram">
+        <br><label for="textboxHistogramChartTitle">Chart Title</label><input id="textboxHistogramChartTitle" type="text">
+        <br><label for="textboxHistogramChartXLabel">X Label</label><input id="textboxHistogramChartXLabel" type="text">
+        <br><label for="textboxHistogramChartYLabel">Y Label</label><input id="textboxHistogramChartYLabel" type="text">
+        <br><label for="textboxHistogramChartBins">Bins</label><input id="textboxHistogramChartBins" type="number">
       </div>
 
       <div>
@@ -125,6 +129,12 @@ window.onload = () => {
       title: document.querySelector("#textboxScatterChartTitle"),
       xLabel: document.querySelector("#textboxScatterChartXLabel"),
       yLabel: document.querySelector("#textboxScatterChartYLabel"),
+    },
+    histogram: {
+      title: document.querySelector("#textboxHistogramChartTitle"),
+      xLabel: document.querySelector("#textboxHistogramChartXLabel"),
+      yLabel: document.querySelector("#textboxHistogramChartYLabel"),
+      bins: document.querySelector("#textboxHistogramChartBins"),
     },
   }
 
@@ -239,6 +249,22 @@ window.onload = () => {
                 data: (data.length > 2 ?
                        data[0].data.map((x, i) => ({position: [x, data[1].data[i]], label: data[2].data[i]})) :
                        data[0].data.map((x, i) => [x, data[1].data[i]])),
+              }
+            }
+          }
+          break
+
+        case "histogram":
+          {
+            const bins = parseInt(chartParams.histogram.bins.value, 10)
+
+            src = {
+              histogram: {
+                title: chartParams.histogram.title.value,
+                xLabel: chartParams.histogram.xLabel.value,
+                yLabel: chartParams.histogram.yLabel.value,
+                data: data[0].data,
+                bins: bins,
               }
             }
           }

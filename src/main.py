@@ -293,6 +293,31 @@ scatter_chart_schema = {
     "required": ["data"],
 }
 
+histogram_chart_schema = {
+    "type": "object",
+    "properties": {
+        "data": {
+            "type": "array",
+            "items": {
+                "type": "number",
+            }
+        },
+        "bins": {
+            "type": "number",
+        },
+        "xLabel": {
+            "type": "string",
+        },
+        "yLabel": {
+            "type": "string",
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["data"],
+}
+
 schema = {
     "type": "object",
     "properties": {
@@ -301,6 +326,7 @@ schema = {
         "bar": bar_chart_schema,
         "pie": pie_chart_schema,
         "scatter": scatter_chart_schema,
+        "histogram": histogram_chart_schema,
     },
     "anyOf": [
         {
@@ -493,6 +519,20 @@ def _plot_scatter_chart(src: dict):
         plt.title(src["title"])
 
 
+def _plot_histogram_chart(src: dict):
+    bins = src.get("bins")
+
+    plt.hist(src["data"], bins=bins)
+
+    if "xLabel" in src:
+        plt.xlabel(src["xLabel"])
+    if "yLabel" in src:
+        plt.ylabel(src["yLabel"])
+
+    if "title" in src:
+        plt.title(src["title"])
+
+
 @app.get("/image", response_class=Response)
 def generate_image(src: str):
     s = _decode_src(src)
@@ -508,6 +548,8 @@ def generate_image(src: str):
         _plot_pie_chart(s["pie"])
     elif "scatter" in s:
         _plot_scatter_chart(s["scatter"])
+    elif "histogram" in s:
+        _plot_histogram_chart(s["histogram"])
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png", bbox_inches="tight")
