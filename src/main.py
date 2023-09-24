@@ -217,12 +217,38 @@ bar_chart_schema = {
     "required": ["y"],
 }
 
+pie_chart_schema = {
+    "type": "object",
+    "properties": {
+        "data": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                    },
+                    "label": {
+                        "type": "string",
+                    },
+                },
+                "required": ["value", "label"],
+            },
+        },
+        "title": {
+            "type": "string",
+        },
+    },
+    "required": ["data"],
+}
+
 schema = {
     "type": "object",
     "properties": {
         "line": line_chart_schema,
         "timeSeries": time_series_chart_schema,
         "bar": bar_chart_schema,
+        "pie": pie_chart_schema,
     },
     "anyOf": [
         {
@@ -381,6 +407,16 @@ def _plot_bar_chart(src: dict):
         plt.title(src["title"])
 
 
+def _plot_pie_chart(src: dict):
+    data = [d["value"] for d in src["data"]]
+    labels = [d["label"] for d in src["data"]]
+
+    plt.pie(data, labels=labels, startangle=90, counterclock=False, autopct=lambda pct: f"{pct:.1f}%")
+
+    if "title" in src:
+        plt.title(src["title"])
+
+
 @app.get("/image", response_class=Response)
 def generate_image(src: str):
     s = _decode_src(src)
@@ -392,6 +428,8 @@ def generate_image(src: str):
         _plot_time_series_chart(s["timeSeries"])
     elif "bar" in s:
         _plot_bar_chart(s["bar"])
+    elif "pie" in s:
+        _plot_pie_chart(s["pie"])
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png", bbox_inches="tight")

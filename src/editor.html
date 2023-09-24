@@ -75,6 +75,7 @@
       </div>
 
       <div class="chart-parameter-container pie">
+        <br><label for="textboxPieChartTitle">Chart Title</label><input id="textboxPieChartTitle" type="text">
       </div>
 
       <div class="chart-parameter-container scatter">
@@ -113,6 +114,9 @@ window.onload = () => {
       xLabel: document.querySelector("#textboxBarChartXLabel"),
       yLabel: document.querySelector("#textboxBarChartYLabel"),
       groupingStyles: Array.from(document.querySelectorAll("input[name='radioBarChartGroupingStyle']")),
+    },
+    pie: {
+      title: document.querySelector("#textboxPieChartTitle"),
     },
   }
 
@@ -201,6 +205,17 @@ window.onload = () => {
                 x: data[0].data,
                 y: flattenIfSingleItem(data.slice(1).map(d => data.length <= 2 ? d.data : d)),
                 groupingStyle: groupingStyle,
+              }
+            }
+          }
+          break
+
+        case "pie":
+          {
+            src = {
+              pie: {
+                title: chartParams.pie.title.value,
+                data: data[0].data.map((v, i) => ({label: data[1].data[i], value: v})),
               }
             }
           }
