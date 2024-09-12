@@ -351,7 +351,7 @@ def _decode_src(src: str) -> dict:
     return s
 
 
-def _plot_line_chart(src: dict):
+def _plot_line_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     data = ()
     if "x" in src:
         data = (src["x"],)
@@ -361,29 +361,29 @@ def _plot_line_chart(src: dict):
             _data = (*data, y["data"])
             if len(set(len(d) for d in _data)) != 1:
                 raise HTTPException(status_code=400, detail="Some data have different length")
-            plt.plot(*_data, label=y["label"])
+            ax.plot(*_data, label=y["label"])
 
-        plt.legend()
+        ax.legend()
     else:
         _data = (*data, src["y"])
         if len(set(len(d) for d in _data)) != 1:
             raise HTTPException(status_code=400, detail="Some data have different length")
-        plt.plot(*_data)
+        ax.plot(*_data)
 
     if "xLabel" in src:
-        plt.xlabel(src["xLabel"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
-        plt.ylabel(src["yLabel"])
+        ax.set_ylabel(src["yLabel"])
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
-    ylim = plt.ylim()
+    ylim = ax.get_ylim()
     ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
-    plt.ylim(bottom=ylim[0], top=ylim[1])
+    ax.set_ylim(bottom=ylim[0], top=ylim[1])
 
 
-def _plot_time_series_chart(src: dict):
+def _plot_time_series_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     x = [mdates.datestr2num(v) for v in src["x"]]
 
     if "xInterval" in src:
@@ -411,44 +411,42 @@ def _plot_time_series_chart(src: dict):
         formatter = mdates.DateFormatter("%Y-%m-%d")
         locator = mdates.DayLocator(interval=1)
 
-    xaxis = plt.axes().xaxis
+    xaxis = ax.xaxis
     xaxis.set_major_formatter(formatter)
     xaxis.set_major_locator(locator)
 
-    plt.xticks(rotation=70)
+    ax.tick_params("x", labelrotation=70)
 
     if all(isinstance(y, dict) for y in src["y"]):
         for y in src["y"]:
             if len(x) != len(y["data"]):
                 raise HTTPException(status_code=400, detail="Some data have different length")
-            plt.plot(x, y["data"], label=y["label"])
+            ax.plot(x, y["data"], label=y["label"])
 
-        plt.legend()
+        ax.legend()
     else:
         if len(x) != len(src["y"]):
             raise HTTPException(status_code=400, detail="Some data have different length")
-        plt.plot(x, src["y"])
+        ax.plot(x, src["y"])
 
     if "xLabel" in src:
-        plt.xlabel(src["xLabel"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
-        plt.ylabel(src["yLabel"])
+        ax.set_ylabel(src["yLabel"])
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
-    ylim = plt.ylim()
+    ylim = ax.get_ylim()
     ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
-    plt.ylim(bottom=ylim[0], top=ylim[1])
+    ax.set_ylim(bottom=ylim[0], top=ylim[1])
 
 
-def _plot_bar_chart(src: dict):
+def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     if "x" in src:
         x = src["x"]
     else:
         x = list(range(len(src["y"])))
-
-    axes = plt.axes()
 
     if all(isinstance(y, dict) for y in src["y"]):
         for i, y in enumerate(src["y"]):
@@ -457,102 +455,103 @@ def _plot_bar_chart(src: dict):
             match src.get("groupingStyle", "stacked"):
                 case "stacked":
                     bottom = [sum(py["data"][j] for py in src["y"][:i]) for j in range(len(y["data"]))]
-                    c = plt.bar(x, y["data"], bottom=bottom, label=y["label"])
-                    plt.bar_label(c, label_type="center")
+                    c = ax.bar(x, y["data"], bottom=bottom, label=y["label"])
+                    ax.bar_label(c, label_type="center")
                 case "grouped":
                     xn = list(range(len(x))) if all(isinstance(v, str) for v in x) else x
                     width = ((xn[1] - xn[0]) / len(src["y"]) * 0.8) if len(xn) > 1 else 1.0
                     x_offset = [n + width * i for n in xn]
-                    c = plt.bar(x_offset, y["data"], width, label=y["label"])
-                    plt.bar_label(c)
+                    c = ax.bar(x_offset, y["data"], width, label=y["label"])
+                    ax.bar_label(c)
 
                     if i == len(src["y"]) - 1:
-                        axes.set_xticks([n + width * (len(src["y"]) - 1) / 2 for n in xn], x)
+                        ax.set_xticks([n + width * (len(src["y"]) - 1) / 2 for n in xn], x)
 
-        plt.legend()
+        ax.legend()
     else:
         if len(x) != len(src["y"]):
             raise HTTPException(status_code=400, detail="Some data have different length")
-        c = plt.bar(x, src["y"])
-        plt.bar_label(c)
+        c = ax.bar(x, src["y"])
+        ax.bar_label(c)
 
     if "xLabel" in src:
-        plt.xlabel(src["xLabel"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
-        plt.ylabel(src["yLabel"])
+        ax.set_ylabel(src["yLabel"])
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
 
-def _plot_pie_chart(src: dict):
+def _plot_pie_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     data = [d["value"] for d in src["data"]]
     labels = [d["label"] for d in src["data"]]
 
-    plt.pie(data, labels=labels, startangle=90, counterclock=False, autopct=lambda pct: f"{pct:.1f}%")
+    ax.pie(data, labels=labels, startangle=90, counterclock=False, autopct=lambda pct: f"{pct:.1f}%")
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
 
-def _plot_scatter_chart(src: dict):
+def _plot_scatter_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     if all(isinstance(data, dict) for data in src["data"]):
         labels = set(data["label"] for data in src["data"])
         for label in labels:
             positions = [data["position"] for data in src["data"] if data["label"] == label]
             x = [x for x, y in positions]
             y = [y for x, y in positions]
-            plt.scatter(x, y, label=label)
+            ax.scatter(x, y, label=label)
 
-        plt.legend()
+        ax.legend()
     else:
         x = [x for x, y in src["data"]]
         y = [y for x, y in src["data"]]
-        plt.scatter(x, y)
+        ax.scatter(x, y)
 
     if "xLabel" in src:
-        plt.xlabel(src["xLabel"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
-        plt.ylabel(src["yLabel"])
+        ax.set_ylabel(src["yLabel"])
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
 
-def _plot_histogram_chart(src: dict):
+def _plot_histogram_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     bins = src.get("bins")
 
-    plt.hist(src["data"], bins=bins)
+    ax.hist(src["data"], bins=bins)
 
     if "xLabel" in src:
-        plt.xlabel(src["xLabel"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
-        plt.ylabel(src["yLabel"])
+        ax.set_ylabel(src["yLabel"])
 
     if "title" in src:
-        plt.title(src["title"])
+        ax.set_title(src["title"])
 
 
 @app.get("/image", response_class=Response)
 def generate_image(src: str):
     s = _decode_src(src)
-    plt.figure()
+
+    fig, ax = plt.subplots()
 
     if "line" in s:
-        _plot_line_chart(s["line"])
+        _plot_line_chart(fig, ax, s["line"])
     elif "timeSeries" in s:
-        _plot_time_series_chart(s["timeSeries"])
+        _plot_time_series_chart(fig, ax, s["timeSeries"])
     elif "bar" in s:
-        _plot_bar_chart(s["bar"])
+        _plot_bar_chart(fig, ax, s["bar"])
     elif "pie" in s:
-        _plot_pie_chart(s["pie"])
+        _plot_pie_chart(fig, ax, s["pie"])
     elif "scatter" in s:
-        _plot_scatter_chart(s["scatter"])
+        _plot_scatter_chart(fig, ax, s["scatter"])
     elif "histogram" in s:
-        _plot_histogram_chart(s["histogram"])
+        _plot_histogram_chart(fig, ax, s["histogram"])
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png", bbox_inches="tight")
+    fig.savefig(buf, format="png", bbox_inches="tight")
 
     buf.seek(0)
 
