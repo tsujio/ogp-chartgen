@@ -382,6 +382,9 @@ def _plot_line_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
     ax.set_ylim(bottom=ylim[0], top=ylim[1])
 
+    ax.set_axisbelow(True)
+    ax.grid()
+
 
 def _plot_time_series_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     x = [mdates.datestr2num(v) for v in src["x"]]
@@ -441,6 +444,9 @@ def _plot_time_series_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     ylim = min(ylim[0] * 1.1, 0), max(ylim[1] * 1.1, 0)
     ax.set_ylim(bottom=ylim[0], top=ylim[1])
 
+    ax.set_axisbelow(True)
+    ax.grid()
+
 
 def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     if "x" in src:
@@ -482,6 +488,9 @@ def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     if "title" in src:
         ax.set_title(src["title"])
 
+    ax.set_axisbelow(True)
+    ax.grid(axis="y")
+
 
 def _plot_pie_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     data = [d["value"] for d in src["data"]]
@@ -516,6 +525,9 @@ def _plot_scatter_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     if "title" in src:
         ax.set_title(src["title"])
 
+    ax.set_axisbelow(True)
+    ax.grid()
+
 
 def _plot_histogram_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     bins = src.get("bins")
@@ -529,6 +541,9 @@ def _plot_histogram_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
 
     if "title" in src:
         ax.set_title(src["title"])
+
+    ax.set_axisbelow(True)
+    ax.grid(axis="y")
 
 
 @app.get("/image", response_class=Response)
