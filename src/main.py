@@ -201,7 +201,23 @@ bar_chart_schema = {
             ],
         },
         "xLabel": {
-            "type": "string",
+            "anyOf": [
+                {
+                    "type": "string",
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                        },
+                        "rotation": {
+                            "type": "number",
+                        },
+                    },
+                    "required": ["text"],
+                },
+            ],
         },
         "yLabel": {
             "type": "string",
@@ -481,7 +497,12 @@ def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
         ax.bar_label(c)
 
     if "xLabel" in src:
-        ax.set_xlabel(src["xLabel"])
+        if isinstance(src["xLabel"], str):
+            ax.set_xlabel(src["xLabel"])
+        else:
+            if "rotation" in src["xLabel"]:
+                ax.tick_params("x", labelrotation=src["xLabel"]["rotation"])
+            ax.set_xlabel(src["xLabel"]["text"])
     if "yLabel" in src:
         ax.set_ylabel(src["yLabel"])
 
