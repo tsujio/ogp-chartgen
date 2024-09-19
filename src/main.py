@@ -200,24 +200,16 @@ bar_chart_schema = {
                 },
             ],
         },
+        "xTick": {
+            "type": "object",
+            "properties": {
+                "rotation": {
+                    "type": "number",
+                },
+            },
+        },
         "xLabel": {
-            "anyOf": [
-                {
-                    "type": "string",
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                        },
-                        "rotation": {
-                            "type": "number",
-                        },
-                    },
-                    "required": ["text"],
-                },
-            ],
+            "type": "string",
         },
         "yLabel": {
             "type": "string",
@@ -470,6 +462,10 @@ def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
     else:
         x = list(range(len(src["y"])))
 
+    if src.get("groupingStyle", "stacked") == "stacked":
+        if "xTick" in src and "rotation" in src["xTick"]:
+            ax.tick_params("x", labelrotation=src["xTick"]["rotation"])
+
     if all(isinstance(y, dict) for y in src["y"]):
         for i, y in enumerate(src["y"]):
             if len(x) != len(y["data"]):
@@ -487,7 +483,10 @@ def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
                     ax.bar_label(c)
 
                     if i == len(src["y"]) - 1:
-                        ax.set_xticks([n + width * (len(src["y"]) - 1) / 2 for n in xn], x)
+                        opts = {}
+                        if "xTick" in src and "rotation" in src["xTick"]:
+                            opts["rotation"] = src["xTick"]["rotation"]
+                        ax.set_xticks([n + width * (len(src["y"]) - 1) / 2 for n in xn], x, **opts)
 
         ax.legend()
     else:
@@ -497,12 +496,7 @@ def _plot_bar_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
         ax.bar_label(c)
 
     if "xLabel" in src:
-        if isinstance(src["xLabel"], str):
-            ax.set_xlabel(src["xLabel"])
-        else:
-            if "rotation" in src["xLabel"]:
-                ax.tick_params("x", labelrotation=src["xLabel"]["rotation"])
-            ax.set_xlabel(src["xLabel"]["text"])
+        ax.set_xlabel(src["xLabel"])
     if "yLabel" in src:
         ax.set_ylabel(src["yLabel"])
 
