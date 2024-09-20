@@ -562,7 +562,7 @@ def _plot_histogram_chart(fig: plt.Figure, ax: plt.Axes, src: dict):
 
 
 @app.get("/image", response_class=Response)
-def generate_image(src: str):
+async def generate_image(src: str):
     s = _decode_src(src)
 
     fig, ax = plt.subplots()
